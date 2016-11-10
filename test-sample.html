@@ -1,0 +1,52 @@
+<html>
+<head>
+	<script type='text/javascript' src='shrapnel.js'></script>
+  <script>
+	
+	function ready(fn) {
+	  if (document.readyState != 'loading'){
+	    fn();
+	  } else {
+	    document.addEventListener('DOMContentLoaded', fn);
+	  }
+	}
+
+	function document_ready(){
+		var w = {FirstName: 'John', LastName: 'Doe', Age: '20'}
+
+		window.x = new Manager("#Data", w);
+
+		document.querySelector('#clicky').addEventListener('click', function(){
+			var data = window.x.get_data();
+			var data_string = '';
+			Object.keys(data).forEach(function(k){ 
+				data_string += (`${k} : ${data[k]}<br/>`);
+			});
+			document.querySelector('#output').innerHTML = data_string;
+			
+		});
+	}
+  
+  	ready(document_ready);
+  </script>
+</head>
+<body>
+
+<div id="Data">
+	<h1><span bind="FirstName"></span> <span bind="LastName"></span> is <span bind="Age"></span></h1>
+	First Name: <input type="text" bind="FirstName" /><br/>
+	Last Name: <input type="text" bind="LastName" /><br/>
+	Age: <select bind="Age">
+	<option>10</option>
+	<option>20</option>	
+	</select><br/>
+	<span bind="FirstName"></span> <span bind="LastName"></span>
+
+	<div loop='COLLECTION'></div>
+	<hr>
+	<button id="clicky">Click</button>
+	<div id="output"></div>
+</div>
+
+</body>
+</html>
