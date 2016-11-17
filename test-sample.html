@@ -12,7 +12,7 @@
 	}
 
 	function document_ready(){
-		var w = {FirstName: 'John', LastName: 'Doe', Age: '20'}
+	    var w = {FirstName: 'John', LastName: 'Doe', Age: '20', Graduated:true, Notes:'The cat was playing in the garden.', BankAmount:'1000'}
 
 		window.x = new Manager("#Data", w);
 
@@ -34,14 +34,21 @@
 
 <div id="Data">
 	<h1><span bind="FirstName"></span> <span bind="LastName"></span> is <span bind="Age"></span></h1>
+    <span bind="FirstName"></span> <label bind="LastName"></label><br /><br />
 	First Name: <input type="text" bind="FirstName" /><br/>
 	Last Name: <input type="text" bind="LastName" /><br/>
 	Age: <select bind="Age">
 	<option>10</option>
 	<option>20</option>	
 	</select><br/>
-	<span bind="FirstName"></span> <span bind="LastName"></span>
-
+    Age: <input list="browsers" bind="BankAmount">
+    <datalist id="browsers">
+        <option>1000</option>
+        <option>2000</option>
+        <option>3000</option>
+    </datalist><br />
+    Has Graduated : <input type="checkbox" bind="Graduated"/><br />
+    <textarea bind="Notes" name="message" rows="10" cols="30"></textarea>
 	<div loop='COLLECTION'></div>
 	<hr>
 	<button id="clicky">Click</button>
