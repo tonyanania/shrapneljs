@@ -12,7 +12,7 @@
 	}
 
 	function document_ready(){
-		var w = {FirstName: 'John', LastName: 'Doe', Age: '20'}
+		var w = {FirstName: 'John', LastName: 'Doe', Age: '20', Aliases: [{Alias: 'Slacker'}, {Alias: 'BigJ'}]}
 
 		window.x = new Manager("#Data", w);
 
@@ -42,7 +42,9 @@
 	</select><br/>
 	<span bind="FirstName"></span> <span bind="LastName"></span>
 
-	<div loop='COLLECTION'></div>
+	<div loop='Aliases' id='sss'>
+		<div bind='Alias'></div>		
+	</div>
 	<hr>
 	<button id="clicky">Click</button>
 	<div id="output"></div>

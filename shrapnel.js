@@ -4,28 +4,35 @@ var Manager = function(rootElement, the_data){
 	var keys = Object.keys(the_data);
 	
 	keys.forEach(function(key) {
-		o.keys.push(key);
-		var elements = [];
-		var bind_elements = document.querySelectorAll(`${rootElement} [bind=${key}]`);
-		bind_elements.forEach(function(vvv){
-	  		elements.push(vvv);
-	  		if (vvv.nodeName === 'INPUT'){
-	  			vvv.addEventListener('keyup', function(e){
-					if (this.value !== o[key.value]) {
-						o[key].value = this.value;
-					}
-				});
-	  		}
-	  		else if (vvv.nodeName === 'SELECT'){
-	  			vvv.addEventListener('change', function(e){
-					if (this.value !== o[key].value){
-						o[key].value = this.value;
-					}
-				});
-	  		}
-		});
+		if (Array.isArray(the_data[key])){
+			var s = document.querySelector(`${rootElement} [loop=${key}]`);
+			console.log(s.innerHTML);
 
-		o[key] = new Field(the_data[key], elements);
+		}
+		else{
+			o.keys.push(key);
+			var elements = [];
+			var bind_elements = document.querySelectorAll(`${rootElement} [bind=${key}]`);
+			bind_elements.forEach(function(vvv){
+		  		elements.push(vvv);
+		  		if (vvv.nodeName === 'INPUT'){
+		  			vvv.addEventListener('keyup', function(e){
+						if (this.value !== o[key.value]) {
+							o[key].value = this.value;
+						}
+					});
+		  		}
+		  		else if (vvv.nodeName === 'SELECT'){
+		  			vvv.addEventListener('change', function(e){
+						if (this.value !== o[key].value){
+							o[key].value = this.value;
+						}
+					});
+		  		}
+			});
+
+			o[key] = new Field(the_data[key], elements);
+		}
 	});	
 
 	this.get_data = function (){
