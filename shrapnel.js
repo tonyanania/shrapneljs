@@ -106,14 +106,7 @@ var Shrapnel = function (rootID, the_data) {
             }
                 //if its a primitive property
             else {
-                //String.prototype.replaceAll = function (str1, str2, ignore) { return this.replace(new RegExp(str1.replace(/([\/\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\<\>\-\&])/g, "\\$&"), (ignore ? "gi" : "g")), (typeof (str2) == "string") ? str2.replace(/\$/g, "$$$$") : str2);}
-                //replace {{}} if there are any.
-                //RIGHT NOW IT GOES IN LOOPS AND HAVE NOT FOUND A WAY TO STOP IT.
-                var replacekey = '{{' + replaceAll(searchkey, '\\\\', '') + '}}';
 
-                if (rootel.innerHTML.toLowerCase().indexOf(replacekey.toLowerCase()) > 0){
-                    rootel.innerHTML = replaceAll(rootel.innerHTML, replacekey, data[key].value);
-                }
                 //get all elements with key and with a key object with property "."
                 var bind_elements = rootel.querySelectorAll(`[bind=${searchkey}]`);
                 for (var i = 0; i < bind_elements.length; i++) {
@@ -145,6 +138,14 @@ var Shrapnel = function (rootID, the_data) {
                         }
                     }
                 };
+                //String.prototype.replaceAll = function (str1, str2, ignore) { return this.replace(new RegExp(str1.replace(/([\/\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\<\>\-\&])/g, "\\$&"), (ignore ? "gi" : "g")), (typeof (str2) == "string") ? str2.replace(/\$/g, "$$$$") : str2);}
+                //replace {{}} if there are any.
+                //RIGHT NOW IT GOES IN LOOPS AND HAVE NOT FOUND A WAY TO STOP IT.
+                //also breaks elements. comment for now.
+                //var replacekey = '{{' + replaceAll(searchkey, '\\\\', '') + '}}';
+                //if (rootel.innerHTML.toLowerCase().indexOf(replacekey.toLowerCase()) > 0) {
+                //    rootel.innerHTML = replaceAll(rootel.innerHTML, replacekey, data[key].value);
+                //}
             }
 
             for (var y = 0; y < elements.length; y++) {
