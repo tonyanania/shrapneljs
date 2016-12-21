@@ -1,3 +1,23 @@
+//Copyright (c) 2010 Tony Anania/Daniel Torelli, https://github.com/tonyanania/shrapneljs
+
+//Permission is hereby granted, free of charge, to any person obtaining
+//a copy of this software and associated documentation files (the
+//"Software"), to deal in the Software without restriction, including
+//without limitation the rights to use, copy, modify, merge, publish,
+//distribute, sublicense, and/or sell copies of the Software, and to
+//permit persons to whom the Software is furnished to do so, subject to
+//the following conditions:
+
+//The above copyright notice and this permission notice shall be
+//included in all copies or substantial portions of the Software.
+
+//THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+//EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+//MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+//NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+//LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+//OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+//WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 var Shrapnel = function (rootID, the_data) {
     var rootElement = document.getElementById(rootID);
 
@@ -20,7 +40,6 @@ var Shrapnel = function (rootID, the_data) {
                 //if (vvv.parentElement.closest('[loop]') == null) {
                 var key = vvv.getAttribute("loop");
                 if (data[key] != undefined) {
-
                     //if there is a collection of objects.
                     var latestelement;
                     //clone the loop element for a template.
@@ -70,7 +89,6 @@ var Shrapnel = function (rootID, the_data) {
         else
             keys = Object.keys(data);
 
-
         //go through each key in the object
         keys.forEach(function (key) {
 
@@ -106,6 +124,8 @@ var Shrapnel = function (rootID, the_data) {
             }
                 //if its a primitive property
             else {
+                //replace {{ }}
+                manager.replaceTextProperties(rootel, searchkey, data[key].value);
 
                 //get all elements with key and with a key object with property "."
                 var bind_elements = rootel.querySelectorAll(`[bind=${searchkey}]`);
@@ -138,14 +158,7 @@ var Shrapnel = function (rootID, the_data) {
                         }
                     }
                 };
-                //String.prototype.replaceAll = function (str1, str2, ignore) { return this.replace(new RegExp(str1.replace(/([\/\,\!\\\^\$\{\}\[\]\(\)\.\*\+\?\|\<\>\-\&])/g, "\\$&"), (ignore ? "gi" : "g")), (typeof (str2) == "string") ? str2.replace(/\$/g, "$$$$") : str2);}
-                //replace {{}} if there are any.
-                //RIGHT NOW IT GOES IN LOOPS AND HAVE NOT FOUND A WAY TO STOP IT.
-                //also breaks elements. comment for now.
-                //var replacekey = '{{' + replaceAll(searchkey, '\\\\', '') + '}}';
-                //if (rootel.innerHTML.toLowerCase().indexOf(replacekey.toLowerCase()) > 0) {
-                //    rootel.innerHTML = replaceAll(rootel.innerHTML, replacekey, data[key].value);
-                //}
+
             }
 
             for (var y = 0; y < elements.length; y++) {
@@ -154,6 +167,91 @@ var Shrapnel = function (rootID, the_data) {
                 data[key].addElement(elements[y]);
             }
         });
+    }
+
+    //replaces the {{ }} by the text. Cannot traverse upwards to parent yet.
+    //skip in loop.
+    this.replaceTextProperties = function (rootel, searchkey, replacetext) {
+        var manager = this;
+        //adjust key remove /. with .
+        var replacekey = '{{' + replaceAll(searchkey, '\\\\', '') + '}}';
+
+        //see if there are any to replace for this key.
+        if (rootel.innerHTML.toLowerCase().indexOf(replacekey.toLowerCase()) > -1) {
+            //get all childnodes.
+            var elements = rootel.childNodes;
+
+            for (var i = 0; i < elements.length; i++) {
+                var element = elements[i];
+
+                //3 == text element
+                if (element.nodeType === 3) {
+                    var text = element.nodeValue;
+                    if (text.trim() !== '') {
+                        var replacedText = replaceAll(text, replacekey, replacetext);
+                        //console.log(element);
+                        if (replacedText !== text && closestWithAttribute(element.parentElement, 'loop') == null) {
+                            console.log(replacekey + ':' + text + '> ' + replacedText);
+                            rootel.replaceChild(document.createTextNode(replacedText), element);
+                        }
+                    }
+                }
+                //1 = element node
+                else if (element.nodeType === 1) {
+                    //loop through attributes as well.
+                    for (var e = 0; e < element.attributes.length; e++) {
+                        var attr = element.attributes[e];
+                        if (attr.value.toLowerCase().indexOf(replacekey.toLowerCase()) > -1) {
+                            attr.value = replaceAll(attr.value, replacekey, replacetext);
+                            console.log(attr.name + " = " + attr.value);
+                        }
+                    }
+                    //check element itself if there is any brackets.
+                    if (element.hasChildNodes()) {
+                        manager.replaceTextProperties(element, searchkey, replacetext);
+                    }
+                }
+            }
+            return;
+            //old
+            //{
+            //    //3 == text element
+            //    if (element.nodeType === 3)
+            //    {
+            //        var text = element.nodeValue;                    
+            //        var replacedText = replaceAll(text, replacekey, replacetext);
+            //        //console.log(element);
+            //        if (replacedText !== text && closestWithAttribute(element.parentElement, 'loop') == null) {
+            //            console.log(replacekey + ':' + text + '> ' + replacedText);
+            //            rootel.replaceChild(document.createTextNode(replacedText), element);
+            //        }
+            //    }
+            //    else
+            //    {
+            //        //if elements have children
+            //        for (var j = 0; j < element.childNodes.length; j++)
+            //        {
+            //            var node = element.childNodes[j];
+            //            //3 == text element
+            //            if (node.nodeType === 3) {
+
+            //                var text = node.nodeValue;
+            //                var replacedText = replaceAll(text, replacekey, replacetext);
+            //                //make sure it's not in a loop
+            //                //console.log(node);
+            //                if (replacedText !== text && closestWithAttribute(node.parentElement, 'loop') == null) {
+            //                    console.log(replacekey + ':' + text + '> ' + replacedText);
+            //                    element.replaceChild(document.createTextNode(replacedText), node);
+            //                }
+            //            }
+            //            //1 == element call again
+            //            else if (node.nodeType === 1) {
+            //                manager.replaceTextProperties(node, searchkey, replacetext);
+            //            }
+            //        }
+            //    }
+            //}
+        }
     }
 
     //Returns the initial updated object 
@@ -204,6 +302,7 @@ var Shrapnel = function (rootID, the_data) {
 
         return returnCleanObject(the_data);
     }
+    //replace all function.
     var replaceAll = function (str, oldvalue, newvalue) {
         return str.replace(new RegExp((oldvalue), (true ? "gi" : "g")), newvalue);
     }
