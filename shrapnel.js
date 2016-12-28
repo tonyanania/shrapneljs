@@ -18,15 +18,23 @@
 //LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 //OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 //WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-var Shrapnel = function (rootID, the_data) {
-    var rootElement = document.getElementById(rootID);
 
+
+//rootID : ID of the binding container
+//the_data : Data to bind
+//callbackFunction : Function back that serves as a callback when shrapnel is done rendering.
+var Shrapnel = function (rootID, the_data, callbackFunction) {
+    var manager = this;
+    var rootElement = document.getElementById(rootID);
+    var parentRoot = rootElement.parentNode;
+    var initialRoot = rootElement.cloneNode(true);
     //Returns the data to update the 2 way binding.
     this.data = the_data;
+    //if hidden show.
 
     //start bind from parent
     this.bind = function (rootel, data) {
-        var manager = this;
+        //var manager = this;
 
         //BIND attribute the ones on in the element.
         manager.bindToElements(rootel, null, data);
@@ -81,7 +89,7 @@ var Shrapnel = function (rootID, the_data) {
     }
 
     this.bindToElements = function (rootel, parentkey, data) {
-        var manager = this;
+        //var manager = this;
         var keys;
         //if its a Field object(properties used on the page), else use the data object not converted.
         if (data.constructor == Field)
@@ -133,32 +141,11 @@ var Shrapnel = function (rootID, the_data) {
                     var vvv = bind_elements[i];
                     //if the property is found within a loop parent, skip.
                     if (closestWithAttribute(vvv, 'loop') == null) {
-                        //if (vvv.closest('[loop]') == null) {
                         elements.push(vvv);
-                        if ((vvv.nodeName === 'INPUT' && vvv.type == 'text') || vvv.nodeName == 'TEXTAREA') {
-                            vvv.addEventListener('change', function (e) {
-                                if (this.value !== data[key].value) {
-                                    data[key].value = this.value;
-                                }
-                            });
-                        }
-                        else if (vvv.nodeName === 'INPUT' && vvv.type == 'checkbox') {
-                            vvv.addEventListener('change', function (e) {
-                                if (this.value !== data[key].value) {
-                                    data[key].value = this.checked;
-                                }
-                            });
-                        }
-                        else if (vvv.nodeName === 'SELECT') {
-                            vvv.addEventListener('change', function (e) {
-                                if (this.value !== data[key].value) {
-                                    data[key].value = this.value;
-                                }
-                            });
-                        }
+                        //add the event listener on change.
+                        vvv.addEventListener('change', function (e) { manager.onChangeListener(e, data[key]); });
                     }
                 };
-
             }
 
             for (var y = 0; y < elements.length; y++) {
@@ -167,6 +154,35 @@ var Shrapnel = function (rootID, the_data) {
                 data[key].addElement(elements[y]);
             }
         });
+    }
+    //removes all listeners. Probably memory leak needs fixing.
+    this.destroy = function () {
+        //return to previous state.
+        parentRoot.replaceChild(initialRoot, rootElement);
+        rootElement = null;
+        initialRoot = null;
+        this.data = null;
+        manager = null;
+    };
+
+    //event listeners put here to remove on destroy
+    this.onChangeListener = function (e, data) {
+        var target = e.target;
+        if ((target.nodeName === 'INPUT' && target.type == 'text') || target.nodeName == 'TEXTAREA') {
+            if (target.value !== data.value) {
+                data.value = target.value;
+            }
+        }
+        else if (target.nodeName === 'INPUT' && target.type == 'checkbox') {
+            if (target.checked !== data.value) {
+                data.value = target.checked;
+            }
+        }
+        else if (target.nodeName === 'SELECT') {
+            if (target.value !== data.value) {
+                data.value = target.value;
+            }
+        }
     }
 
     //replaces the {{ }} by the text. Cannot traverse upwards to parent yet.
@@ -189,9 +205,7 @@ var Shrapnel = function (rootID, the_data) {
                     var text = element.nodeValue;
                     if (text.trim() !== '') {
                         var replacedText = replaceAll(text, replacekey, replacetext);
-                        //console.log(element);
                         if (replacedText !== text && closestWithAttribute(element.parentElement, 'loop') == null) {
-                            console.log(replacekey + ':' + text + '> ' + replacedText);
                             rootel.replaceChild(document.createTextNode(replacedText), element);
                         }
                     }
@@ -203,7 +217,6 @@ var Shrapnel = function (rootID, the_data) {
                         var attr = element.attributes[e];
                         if (attr.value.toLowerCase().indexOf(replacekey.toLowerCase()) > -1) {
                             attr.value = replaceAll(attr.value, replacekey, replacetext);
-                            console.log(attr.name + " = " + attr.value);
                         }
                     }
                     //check element itself if there is any brackets.
@@ -213,50 +226,11 @@ var Shrapnel = function (rootID, the_data) {
                 }
             }
             return;
-            //old
-            //{
-            //    //3 == text element
-            //    if (element.nodeType === 3)
-            //    {
-            //        var text = element.nodeValue;                    
-            //        var replacedText = replaceAll(text, replacekey, replacetext);
-            //        //console.log(element);
-            //        if (replacedText !== text && closestWithAttribute(element.parentElement, 'loop') == null) {
-            //            console.log(replacekey + ':' + text + '> ' + replacedText);
-            //            rootel.replaceChild(document.createTextNode(replacedText), element);
-            //        }
-            //    }
-            //    else
-            //    {
-            //        //if elements have children
-            //        for (var j = 0; j < element.childNodes.length; j++)
-            //        {
-            //            var node = element.childNodes[j];
-            //            //3 == text element
-            //            if (node.nodeType === 3) {
-
-            //                var text = node.nodeValue;
-            //                var replacedText = replaceAll(text, replacekey, replacetext);
-            //                //make sure it's not in a loop
-            //                //console.log(node);
-            //                if (replacedText !== text && closestWithAttribute(node.parentElement, 'loop') == null) {
-            //                    console.log(replacekey + ':' + text + '> ' + replacedText);
-            //                    element.replaceChild(document.createTextNode(replacedText), node);
-            //                }
-            //            }
-            //            //1 == element call again
-            //            else if (node.nodeType === 1) {
-            //                manager.replaceTextProperties(node, searchkey, replacetext);
-            //            }
-            //        }
-            //    }
-            //}
         }
     }
 
     //Returns the initial updated object 
     this.getData = function () {
-        //return the_data;
         //data to return.
         var returnCleanObject = function (d) {
             var data = {};
@@ -276,12 +250,10 @@ var Shrapnel = function (rootID, the_data) {
 
                     //if obj is an array
                     if (obj instanceof Array) {
-                        if (k == 'LotteryNumber') {
-                            var i = '';
-                        }
+
                         data[k] = [obj.length];
-                        obj.forEach(function (d, i) {
-                            data[k][i] = returnCleanObject(d);
+                        obj.forEach(function (dv, i) {
+                            data[k][i] = returnCleanObject(dv);
                         });
                     }
                         //if the obj property is an object
@@ -297,10 +269,11 @@ var Shrapnel = function (rootID, the_data) {
             }
             else
                 data = d;
+
             return data;
         };
 
-        return returnCleanObject(the_data);
+        return returnCleanObject(this.data);
     }
     //replace all function.
     var replaceAll = function (str, oldvalue, newvalue) {
@@ -309,10 +282,6 @@ var Shrapnel = function (rootID, the_data) {
     //polyfill for closest()
     var closestWithAttribute = function (el, attr) {
         // Traverse the DOM up with a while loop
-
-        //console.log(el.hasAttribute(attr));
-        //if (el.parentNode == null) return null;
-
         while (!el.hasAttribute(attr)) {
             //if there is no more elements or it's the root, your out.
             if (!el || el == rootElement) {
@@ -329,10 +298,12 @@ var Shrapnel = function (rootID, the_data) {
         // Then return the matched element
         return el;
     }
-    //function (el, attr) {
-    //return el && (fn(el) ? el : closestWithAttribute(el.parentNode, function (el) { return (el.hasAttribute === attr); }));  
     //get the root element, start.
-    this.bind(rootElement, the_data);
+    this.bind(rootElement, this.data);
+    //done loading, callback function
+    if (callbackFunction != null) {
+        callbackFunction();
+    }
 };
 
 class Field {
