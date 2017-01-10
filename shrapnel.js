@@ -90,13 +90,14 @@ var Shrapnel = function (rootID, the_data, callbackFunction) {
 
     this.bindToElements = function (rootel, parentkey, data) {
         //var manager = this;
-        var keys;
+        var keys = [];
         //if its a Field object(properties used on the page), else use the data object not converted.
-        if (data.constructor == Field)
-            keys = Object.keys(data.value);
-        else
-            keys = Object.keys(data);
-
+        if (data != null) {
+            if (data.constructor == Field)
+                keys = Object.keys(data.value);
+            else
+                keys = Object.keys(data);
+        }
         //go through each key in the object
         keys.forEach(function (key) {
 
@@ -114,19 +115,20 @@ var Shrapnel = function (rootID, the_data, callbackFunction) {
             //bind to field class
             //if it's been set, append new elements to it.
             //get the property and replace it with a class that contains the data and the binded elements.
+            //if the data is null, still its value.
+            if (data[key] == null || (data[key] != undefined && data[key].constructor != Field)) {
 
-            if (data[key] != undefined && data[key].constructor != Field) {
                 data[key] = new Field(data[key], []);
             }
 
             //if the property is an object, loop through this ones properties as well.
-            if (typeof (data[key].value) == 'object' && !(data[key].value instanceof Array)) {
+            if (data[key].value != null && typeof (data[key].value) == 'object' && !(data[key].value instanceof Array)) {
 
                 //keep going lower by building parent key. and keep binding all properties if it is an object.
                 //get property value
                 manager.bindToElements(rootel, searchkey, data[key].value);
             }
-            else if (typeof (data[key].value) == 'object' && (data[key].value instanceof Array)) {
+            else if (data[key].value != null && typeof (data[key].value) == 'object' && (data[key].value instanceof Array)) {
 
                 //console.log(key);
             }
@@ -210,7 +212,7 @@ var Shrapnel = function (rootID, the_data, callbackFunction) {
                         }
                     }
                 }
-                //1 = element node
+                    //1 = element node
                 else if (element.nodeType === 1) {
                     //loop through attributes as well.
                     for (var e = 0; e < element.attributes.length; e++) {
@@ -236,7 +238,7 @@ var Shrapnel = function (rootID, the_data, callbackFunction) {
             var data = {};
             //loop through all the properties.
             //if its an array of objects, loop through it
-            if (typeof (d) == 'object') {
+            if (d != null && typeof (d) == 'object') {
                 Object.keys(d).forEach(function (k) {
                     var obj;
                     //if it's not a Field, it's because it wasn't bound so it was never converted to a field, return value.
@@ -262,7 +264,6 @@ var Shrapnel = function (rootID, the_data, callbackFunction) {
                     }
                         //if obj is a primitive. 
                     else {
-                        console.log(obj);
                         data[k] = obj;
                     }
                 });
