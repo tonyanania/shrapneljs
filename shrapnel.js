@@ -19,7 +19,6 @@
 //OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 //WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-
 //rootID : ID of the binding container
 //the_data : Data to bind
 //callbackFunction : Function back that serves as a callback when shrapnel is done rendering.
@@ -29,8 +28,26 @@ var Shrapnel = function (rootID, the_data, callbackFunction) {
     var parentRoot = rootElement.parentNode;
     var initialRoot = rootElement.cloneNode(true);
     //Returns the data to update the 2 way binding.
-    this.data = the_data;
+    //clone object not to affect original.  
+    //this.data = eval('(' + JSON.stringify(the_data) + ')'); // good but does not serialize objects(dates, functions)
     //if hidden show.
+    this.deepCopy = function (o) {
+        var copy = o, k;
+        if (o && typeof o === 'object') {
+            if (o instanceof Date || o instanceof RegExp)
+                copy = new o.constructor(o); //or new Date(obj);
+            else
+                copy = Object.prototype.toString.call(o) === '[object Array]' ? [] : {};
+            for (k in o) {
+                copy[k] = this.deepCopy(o[k]);
+            }
+        }
+
+        return copy;
+    };
+    this.data = this.deepCopy(the_data); //serializes dates, functions, might be missing some.
+    //console.log(the_data);
+    //console.log(this.deepCopy(the_data));
 
     //start bind from parent
     this.bind = function (rootel, data) {
@@ -346,5 +363,3 @@ class Field {
         }
     }
 }
-
-
