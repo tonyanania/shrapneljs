@@ -23,6 +23,8 @@
 //the_data : Data to bind
 //callbackFunction : Function back that serves as a callback when shrapnel is done rendering.
 var Shrapnel = function (rootID, the_data, callbackFunction) {
+
+    var isInitialized = true;
     var manager = this;
     var rootElement = document.getElementById(rootID);
     var parentRoot = rootElement.parentNode;
@@ -46,8 +48,6 @@ var Shrapnel = function (rootID, the_data, callbackFunction) {
         return copy;
     };
     this.data = this.deepCopy(the_data); //serializes dates, functions, might be missing some.
-    //console.log(the_data);
-    //console.log(this.deepCopy(the_data));
 
     //start bind from parent
     this.bind = function (rootel, data) {
@@ -62,9 +62,10 @@ var Shrapnel = function (rootID, the_data, callbackFunction) {
         for (var x = 0; x < loop_elements.length; x++) {
             var vvv = loop_elements[x];
             if (closestWithAttribute(vvv.parentElement, 'loop') == null) {
-                //if (vvv.parentElement.closest('[loop]') == null) {
                 var key = vvv.getAttribute("loop");
-                if (data[key] != undefined) {
+
+                if (data[key] != undefined && data[key].value.length > 0)
+                {
                     //if there is a collection of objects.
                     var latestelement;
                     //clone the loop element for a template.
@@ -76,7 +77,8 @@ var Shrapnel = function (rootID, the_data, callbackFunction) {
                     //if (data[key].value.Remove == undefined) data[key].value.prototype.Remove = function () { console.log('removed'); }
                     //if (data[key].value.Template == undefined) data[key].value.prototype.Template = looptemplate;
 
-                    for (var i = 0; i < data[key].value.length; i++) {
+                    for (var i = 0; i < data[key].value.length; i++)
+                    {
                         var newelement;
                         //if its the first, use the template on the page, else create another loop template to use.
                         if (i == 0)
@@ -122,11 +124,12 @@ var Shrapnel = function (rootID, the_data, callbackFunction) {
             var searchkey = '';
             //if there's a parent key, build the searchkey to match it with the property name used in the bind attribute. 
             //Ex: Book.Cover.Type
+            //MAKE LESS REPLACE ALL CALLS FOR PERFORMANCE INCREASE.
             if (parentkey != null && parentkey != '') {
-                searchkey = parentkey + '\\.' + key;
+                searchkey = replaceAll(parentkey, ':', '\:') + '\\.' + replaceAll(key, ':', '\\:');
             }
             else {
-                searchkey = key;
+                searchkey = (!isNaN(parseFloat(key)) && isFinite(key)) ? '' : replaceAll(key, ':', '\\:');
             }
 
             //bind to field class
@@ -156,8 +159,10 @@ var Shrapnel = function (rootID, the_data, callbackFunction) {
 
                 //get all elements with key and with a key object with property "."
                 var bind_elements = rootel.querySelectorAll(`[bind=${searchkey}]`);
+                
                 for (var i = 0; i < bind_elements.length; i++) {
                     var vvv = bind_elements[i];
+                    
                     //if the property is found within a loop parent, skip.
                     if (closestWithAttribute(vvv, 'loop') == null) {
                         elements.push(vvv);
@@ -176,6 +181,8 @@ var Shrapnel = function (rootID, the_data, callbackFunction) {
     }
     //removes all listeners. Probably memory leak needs fixing.
     this.destroy = function () {
+        //if manager is null, its dead.
+        if (manager == null) return;
         //return to previous state.
         parentRoot.replaceChild(initialRoot, rootElement);
         rootElement = null;
@@ -297,6 +304,29 @@ var Shrapnel = function (rootID, the_data, callbackFunction) {
     var replaceAll = function (str, oldvalue, newvalue) {
         return str.replace(new RegExp((oldvalue), (true ? "gi" : "g")), newvalue);
     }
+    //returns the object by string.
+    //NOT USED NOW BUT CAN,but can be to fetch objects deep in.
+    var objectbystring = function (o, s)
+    {
+        s = s.replace(/\[(\w+)\]/g, '.$1'); // convert indexes to properties
+        s = s.replace(/^\./, '');           // strip a leading dot
+        var a = s.split('.');
+        for (var i = 0, n = a.length; i < n; ++i) {
+            var k = a[i];
+            if (k in o) {
+                o = o[k];
+            } else {
+                return;
+            }
+        }
+        return o;
+        //OR
+        //Object.resolve = function (path, obj) {
+        //    return path.split('.').reduce(function (prev, curr) {
+        //        return prev ? prev[curr] : undefined
+        //    }, obj || self)
+        //}
+    }
     //polyfill for closest()
     var closestWithAttribute = function (el, attr) {
         // Traverse the DOM up with a while loop
@@ -340,7 +370,7 @@ class Field {
         var obj = this;
         this._value = new_value;
         this.elements.forEach(function (v) {
-            //console.log(v);
+            
             obj.setElementValues(v);
         });
     }
@@ -350,7 +380,7 @@ class Field {
     }
     setElementValues(v) {
         if (typeof (this.value) == 'object') {
-            //console.log(v);
+            
         }
         else if ((v.nodeName === 'INPUT' && v.type == 'text') || v.nodeName === 'SELECT' || v.nodeName == 'TEXTAREA') {
             v.value = this.value;
